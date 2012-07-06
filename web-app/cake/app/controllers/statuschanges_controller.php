@@ -93,7 +93,7 @@ function partial_dump($csv_file, $models) {
                 $row[] = 'Undefined Feature';
         }
 
-        switch ($item['StatusChange']['feature']) { // Action
+        switch ($item['StatusChange']['status']) { // Action
             case 0:
                 $row[] = 'Disabling';
                 break;

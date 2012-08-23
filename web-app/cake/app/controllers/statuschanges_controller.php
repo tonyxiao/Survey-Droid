@@ -112,4 +112,16 @@ function partial_dump($csv_file, $models) {
     }
 }
 
+function standardize($models, $modelName) {
+    // singular case
+    if (array_key_exists($modelName, $models))
+        return $models[$modelName];
+    // array case
+    $arr = array();
+    foreach($models as $item) {
+        $arr[] = $item[$modelName];
+    }
+    return $arr;
+}
+
 ?>

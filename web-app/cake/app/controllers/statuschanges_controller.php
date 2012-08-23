@@ -11,7 +11,7 @@
  * @author Tony Xiao
  */
 
-class CallsController extends AppController
+class StatusChangesController extends AppController
 {
 	//for php4
 	var $name = 'StatusChanges';

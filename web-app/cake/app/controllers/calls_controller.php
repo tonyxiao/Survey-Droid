@@ -63,7 +63,7 @@ class CallsController extends AppController
         fputcsv($csv_file, $headers, ',', '"');
 
         $total = $this->$modelClass->find('count');
-        $increment = 100;
+        $increment = 10000;
 
         for ($offset = 0; $offset<$total; $offset+=$increment) {
             $models = $this->$modelClass->find('all', array(

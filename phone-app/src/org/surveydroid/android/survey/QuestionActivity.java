@@ -68,7 +68,6 @@ public abstract class QuestionActivity extends Activity
 	{
 		private SurveyBinder sBinder;
 		
-		@Override
 		public void onServiceConnected(ComponentName name, IBinder binder)
 		{
 			sBinder = (SurveyBinder) binder;
@@ -88,7 +87,6 @@ public abstract class QuestionActivity extends Activity
 				setTitle(survey.getName());
 		}
 		
-		@Override
 		public void onServiceDisconnected(ComponentName name)
 		{
 			if (!isDone)

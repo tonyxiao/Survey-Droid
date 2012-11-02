@@ -91,7 +91,6 @@ public class SettingsActivity extends Activity
         locationCheckbox.setOnCheckedChangeListener(
         		new OnCheckedChangeListener()
         {
-			@Override
 			public void onCheckedChanged(CompoundButton button, boolean check)
 			{
 				Config.putSetting(SettingsActivity.this,
@@ -107,7 +106,6 @@ public class SettingsActivity extends Activity
         callLogCheckbox.setOnCheckedChangeListener(
         		new OnCheckedChangeListener()
         {
-			@Override
 			public void onCheckedChanged(CompoundButton button, boolean check)
 			{
 				Config.putSetting(SettingsActivity.this,
@@ -122,7 +120,6 @@ public class SettingsActivity extends Activity
         		Config.getSetting(this, Config.SURVEYS_LOCAL, true));
         surveyCheckbox.setOnCheckedChangeListener(new OnCheckedChangeListener()
         {
-			@Override
 			public void onCheckedChanged(CompoundButton button, boolean check)
 			{
 				Config.putSetting(SettingsActivity.this,
@@ -135,7 +132,6 @@ public class SettingsActivity extends Activity
         Button id = (Button) findViewById(R.id.settings_idButton);
         id.setOnClickListener(new View.OnClickListener()
         {
-			@Override
 			public void onClick(View view)
 			{
 				//show the id activity
@@ -151,7 +147,6 @@ public class SettingsActivity extends Activity
 	        Button syncButton = (Button) findViewById(R.id.settings_syncButton);
 	        syncButton.setOnClickListener(new View.OnClickListener()
 	        {
-				@Override
 				public void onClick(View v)
 				{
 					Intent syncIntent = new Intent(SettingsActivity.this, ComsService.class);
@@ -215,35 +210,39 @@ public class SettingsActivity extends Activity
     	{
     		StatusDBHandler sdbh = new StatusDBHandler(this);
             sdbh.open();
-            
-            if (surveyChanged)
-        	{
-            	boolean enabled =
-            		Config.getSetting(this, Config.SURVEYS_LOCAL, true);
-        		sdbh.statusChanged(SurveyDroidDB.StatusTable.SURVEYS,
-        				enabled, Util.currentTimeAdjusted() / 1000);
-        		surveyChanged = false;
-        	}
-        	
-        	if (locationChanged)
-        	{
-        		boolean enabled =
-            		Config.getSetting(this, Config.TRACKING_LOCAL, true);
-        		sdbh.statusChanged(SurveyDroidDB.StatusTable.LOCATION_TRACKING,
-        				enabled, Util.currentTimeAdjusted() / 1000);
-        		locationChanged = false;
-        	}
-        	
-        	if (calllogChanged)
-        	{
-        		boolean enabled =
-            		Config.getSetting(this, Config.CALL_LOG_LOCAL, true);
-        		sdbh.statusChanged(SurveyDroidDB.StatusTable.CALL_LOGGING,
-        				enabled, Util.currentTimeAdjusted() / 1000);
-        		calllogChanged = false;
-        	}
-        	
-        	sdbh.close();
+            try
+            {
+	            if (surveyChanged)
+	        	{
+	            	boolean enabled =
+	            		Config.getSetting(this, Config.SURVEYS_LOCAL, true);
+	        		sdbh.statusChanged(SurveyDroidDB.StatusTable.SURVEYS,
+	        				enabled, Util.currentTimeAdjusted() / 1000);
+	        		surveyChanged = false;
+	        	}
+	        	
+	        	if (locationChanged)
+	        	{
+	        		boolean enabled =
+	            		Config.getSetting(this, Config.TRACKING_LOCAL, true);
+	        		sdbh.statusChanged(SurveyDroidDB.StatusTable.LOCATION_TRACKING,
+	        				enabled, Util.currentTimeAdjusted() / 1000);
+	        		locationChanged = false;
+	        	}
+	        	
+	        	if (calllogChanged)
+	        	{
+	        		boolean enabled =
+	            		Config.getSetting(this, Config.CALL_LOG_LOCAL, true);
+	        		sdbh.statusChanged(SurveyDroidDB.StatusTable.CALL_LOGGING,
+	        				enabled, Util.currentTimeAdjusted() / 1000);
+	        		calllogChanged = false;
+	        	}
+            }
+            finally
+            {
+            	sdbh.close();
+            }
         	
         	Intent comsIntent = new Intent(this, ComsService.class);
         	comsIntent.setAction(ComsService.ACTION_UPLOAD_DATA);

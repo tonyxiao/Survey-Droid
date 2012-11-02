@@ -185,7 +185,6 @@ public class SurveyService extends Service
 		long startTime;     //when the survey was scheduled for
 		long endTime;		//when does this survey timeout
 		
-		@Override
 		public int compareTo(SurveyInfo that)
 		{
 			if (this.endTime == Config.SURVEY_TIMEOUT_NEVER)
@@ -344,13 +343,19 @@ public class SurveyService extends Service
 			}
 			TakenDBHandler tdbh = new TakenDBHandler(this);
 			tdbh.open();
-			if (tdbh.writeSurvey(sInfo.id, status,
-					Util.currentTimeAdjusted() / 1000) == false)
+			try
 			{
-				Util.e(null, TAG,
-						"Failed to write completion record!");
+				if (tdbh.writeSurvey(sInfo.id, status,
+						Util.currentTimeAdjusted() / 1000) == false)
+				{
+					Util.e(null, TAG,
+							"Failed to write completion record!");
+				}
 			}
-			tdbh.close();
+			finally
+			{
+				tdbh.close();
+			}
 			uploadNow();
 			if (currentInfo == null)
 			{
@@ -618,37 +623,43 @@ public class SurveyService extends Service
 		Util.i(null, TAG, "Canceling survey");
 		TakenDBHandler tdbh = new TakenDBHandler(this);
 		tdbh.open();
-		int id = currentInfo.id;
-		int type = currentInfo.type;
-		if (id != DUMMY_SURVEY_ID && type != SURVEY_TYPE_USER_INIT)
+		try
 		{
-			int status;
-			switch (type)
+			int id = currentInfo.id;
+			int type = currentInfo.type;
+			if (id != DUMMY_SURVEY_ID && type != SURVEY_TYPE_USER_INIT)
 			{
-			case SURVEY_TYPE_TIMED:
-				status = SurveyDroidDB.TakenTable.SCHEDULED_DISMISSED;
-				break;
-			case SURVEY_TYPE_RANDOM:
-				status = SurveyDroidDB.TakenTable.RANDOM_DISMISSED;
-				break;
-			case SURVEY_TYPE_CALL_INIT:
-				status = SurveyDroidDB.TakenTable.CALL_INITIATED_DISMISSED;
-				break;
-			case SURVEY_TYPE_LOC_INIT:
-				status = SurveyDroidDB.TakenTable.LOCATION_BASED_DISMISSED;
-				break;
-			default:
-				Util.w(null, TAG, "Invalid survey type: " + type);
-				tdbh.close();
-				status = -1;
-			}
-			if (status != -1 && tdbh.writeSurvey(id, status,
-					Util.currentTimeAdjusted() / 1000) == false)
-			{
-				Util.e(null, TAG, "Failed to write completion record!");
+				int status;
+				switch (type)
+				{
+				case SURVEY_TYPE_TIMED:
+					status = SurveyDroidDB.TakenTable.SCHEDULED_DISMISSED;
+					break;
+				case SURVEY_TYPE_RANDOM:
+					status = SurveyDroidDB.TakenTable.RANDOM_DISMISSED;
+					break;
+				case SURVEY_TYPE_CALL_INIT:
+					status = SurveyDroidDB.TakenTable.CALL_INITIATED_DISMISSED;
+					break;
+				case SURVEY_TYPE_LOC_INIT:
+					status = SurveyDroidDB.TakenTable.LOCATION_BASED_DISMISSED;
+					break;
+				default:
+					Util.w(null, TAG, "Invalid survey type: " + type);
+					tdbh.close();
+					status = -1;
+				}
+				if (status != -1 && tdbh.writeSurvey(id, status,
+						Util.currentTimeAdjusted() / 1000) == false)
+				{
+					Util.e(null, TAG, "Failed to write completion record!");
+				}
 			}
 		}
-		tdbh.close();
+		finally
+		{
+			tdbh.close();
+		}
 		
 		if (!surveys.isEmpty())
 		{
@@ -717,35 +728,41 @@ public class SurveyService extends Service
 		{
 			TakenDBHandler tdbh = new TakenDBHandler(this);
 			tdbh.open();
-			int status;
-			switch (currentInfo.type)
+			try
 			{
-			case SURVEY_TYPE_TIMED:
-				status = SurveyDroidDB.TakenTable.SCHEDULED_FINISHED;
-				break;
-			case SURVEY_TYPE_RANDOM:
-				status = SurveyDroidDB.TakenTable.RANDOM_FINISHED;
-				break;
-			case SURVEY_TYPE_USER_INIT:
-				status = SurveyDroidDB.TakenTable.USER_INITIATED_FINISHED;
-				break;
-			case SURVEY_TYPE_CALL_INIT:
-				status = SurveyDroidDB.TakenTable.CALL_INITIATED_FINISHED;
-				break;
-			case SURVEY_TYPE_LOC_INIT:
-				status = SurveyDroidDB.TakenTable.LOCATION_BASED_FINISHED;
-				break;
-			default:
-				Util.w(this, TAG, "Invalid survey type: " + currentInfo.type);
+				int status;
+				switch (currentInfo.type)
+				{
+				case SURVEY_TYPE_TIMED:
+					status = SurveyDroidDB.TakenTable.SCHEDULED_FINISHED;
+					break;
+				case SURVEY_TYPE_RANDOM:
+					status = SurveyDroidDB.TakenTable.RANDOM_FINISHED;
+					break;
+				case SURVEY_TYPE_USER_INIT:
+					status = SurveyDroidDB.TakenTable.USER_INITIATED_FINISHED;
+					break;
+				case SURVEY_TYPE_CALL_INIT:
+					status = SurveyDroidDB.TakenTable.CALL_INITIATED_FINISHED;
+					break;
+				case SURVEY_TYPE_LOC_INIT:
+					status = SurveyDroidDB.TakenTable.LOCATION_BASED_FINISHED;
+					break;
+				default:
+					Util.w(this, TAG, "Invalid survey type: " + currentInfo.type);
+					tdbh.close();
+					status = -1;
+				}
+				if (status != -1 && tdbh.writeSurvey(currentInfo.id, status,
+						Util.currentTimeAdjusted() / 1000) == false)
+				{
+					Util.e(null, TAG, "Failed to write completion record!");
+				}
+			}
+			finally
+			{
 				tdbh.close();
-				status = -1;
 			}
-			if (status != -1 && tdbh.writeSurvey(currentInfo.id, status,
-					Util.currentTimeAdjusted() / 1000) == false)
-			{
-				Util.e(null, TAG, "Failed to write completion record!");
-			}
-			tdbh.close();
 			
 			//try to upload answers ASAP
 			uploadNow();
@@ -787,34 +804,40 @@ public class SurveyService extends Service
 		{
 			TakenDBHandler tdbh = new TakenDBHandler(this);
 			tdbh.open();
-			int status;
-			switch (currentInfo.type)
+			try
 			{
-			case SURVEY_TYPE_TIMED:
-				status = SurveyDroidDB.TakenTable.SCHEDULED_UNFINISHED;
-				break;
-			case SURVEY_TYPE_RANDOM:
-				status = SurveyDroidDB.TakenTable.RANDOM_UNFINISHED;
-				break;
-			case SURVEY_TYPE_USER_INIT:
-				status = SurveyDroidDB.TakenTable.USER_INITIATED_UNFINISHED;
-				break;
-			case SURVEY_TYPE_CALL_INIT:
-				status = SurveyDroidDB.TakenTable.CALL_INITIATED_UNFINISHED;
-				break;
-			case SURVEY_TYPE_LOC_INIT:
-				status = SurveyDroidDB.TakenTable.LOCATION_BASED_UNFINISHED;
-				break;
-			default:
-				Util.w(this, TAG, "Invalid survey type: " + currentInfo.type);
-				status = -1;
+				int status;
+				switch (currentInfo.type)
+				{
+				case SURVEY_TYPE_TIMED:
+					status = SurveyDroidDB.TakenTable.SCHEDULED_UNFINISHED;
+					break;
+				case SURVEY_TYPE_RANDOM:
+					status = SurveyDroidDB.TakenTable.RANDOM_UNFINISHED;
+					break;
+				case SURVEY_TYPE_USER_INIT:
+					status = SurveyDroidDB.TakenTable.USER_INITIATED_UNFINISHED;
+					break;
+				case SURVEY_TYPE_CALL_INIT:
+					status = SurveyDroidDB.TakenTable.CALL_INITIATED_UNFINISHED;
+					break;
+				case SURVEY_TYPE_LOC_INIT:
+					status = SurveyDroidDB.TakenTable.LOCATION_BASED_UNFINISHED;
+					break;
+				default:
+					Util.w(this, TAG, "Invalid survey type: " + currentInfo.type);
+					status = -1;
+				}
+				if (status != -1 && tdbh.writeSurvey(currentInfo.id, status,
+						Util.currentTimeAdjusted() / 1000) == false)
+				{
+					Util.e(null, TAG, "Failed to write completion record!");
+				}
 			}
-			if (status != -1 && tdbh.writeSurvey(currentInfo.id, status,
-					Util.currentTimeAdjusted() / 1000) == false)
+			finally
 			{
-				Util.e(null, TAG, "Failed to write completion record!");
+				tdbh.close();
 			}
-			tdbh.close();
 			uploadNow();
 		}
 		if (!surveys.isEmpty())
@@ -886,54 +909,60 @@ public class SurveyService extends Service
 		}
 		TakenDBHandler tdbh = new TakenDBHandler(this);
 		tdbh.open();
-		while (true)
+		try
 		{
-			SurveyInfo sInfo = surveys.poll();
-			if (sInfo == null) break;
-			Util.v(null, TAG, "Current survey: " + sInfo.id + " at " + sInfo.startTime);
-			if ((sInfo.endTime != Config.SURVEY_TIMEOUT_NEVER &&
-					sInfo.endTime <= System.currentTimeMillis()) || all)
+			while (true)
 			{
-				Util.v(null, TAG, "removing survey");
-				if (sInfo.id != DUMMY_SURVEY_ID &&
-						sInfo.type != SURVEY_TYPE_USER_INIT)
+				SurveyInfo sInfo = surveys.poll();
+				if (sInfo == null) break;
+				Util.v(null, TAG, "Current survey: " + sInfo.id + " at " + sInfo.startTime);
+				if ((sInfo.endTime != Config.SURVEY_TIMEOUT_NEVER &&
+						sInfo.endTime <= System.currentTimeMillis()) || all)
 				{
-					int status;
-					switch (sInfo.type)
+					Util.v(null, TAG, "removing survey");
+					if (sInfo.id != DUMMY_SURVEY_ID &&
+							sInfo.type != SURVEY_TYPE_USER_INIT)
 					{
-					case SURVEY_TYPE_TIMED:
-						status = SurveyDroidDB.TakenTable.SCHEDULED_IGNORED;
-						break;
-					case SURVEY_TYPE_RANDOM:
-						status = SurveyDroidDB.TakenTable.RANDOM_IGNORED;
-						break;
-					case SURVEY_TYPE_CALL_INIT:
-						status = SurveyDroidDB.TakenTable.CALL_INITIATED_IGNORED;
-						break;
-					case SURVEY_TYPE_LOC_INIT:
-						status = SurveyDroidDB.TakenTable.LOCATION_BASED_IGNORED;
-						break;
-					default:
-						Util.w(this, TAG, "Invalid survey type: " + sInfo.type);
-						continue;
+						int status;
+						switch (sInfo.type)
+						{
+						case SURVEY_TYPE_TIMED:
+							status = SurveyDroidDB.TakenTable.SCHEDULED_IGNORED;
+							break;
+						case SURVEY_TYPE_RANDOM:
+							status = SurveyDroidDB.TakenTable.RANDOM_IGNORED;
+							break;
+						case SURVEY_TYPE_CALL_INIT:
+							status = SurveyDroidDB.TakenTable.CALL_INITIATED_IGNORED;
+							break;
+						case SURVEY_TYPE_LOC_INIT:
+							status = SurveyDroidDB.TakenTable.LOCATION_BASED_IGNORED;
+							break;
+						default:
+							Util.w(this, TAG, "Invalid survey type: " + sInfo.type);
+							continue;
+						}
+						if (tdbh.writeSurvey(sInfo.id, status,
+								Util.currentTimeAdjusted() / 1000) == false)
+						{
+							Util.e(null, TAG, "Failed to write completion record!");
+						}
+						showMissedSurveyNotification();
 					}
-					if (tdbh.writeSurvey(sInfo.id, status,
-							Util.currentTimeAdjusted() / 1000) == false)
-					{
-						Util.e(null, TAG, "Failed to write completion record!");
-					}
-					showMissedSurveyNotification();
+				}
+				else
+				{
+					//survey is not being removed
+					//since the surveys queue is sorted, we can stop now
+					surveys.add(sInfo);
+					break;
 				}
 			}
-			else
-			{
-				//survey is not being removed
-				//since the surveys queue is sorted, we can stop now
-				surveys.add(sInfo);
-				break;
-			}
 		}
-		tdbh.close();
+		finally
+		{
+			tdbh.close();
+		}
 		uploadNow();
 		if (!surveys.isEmpty())
 		{ 

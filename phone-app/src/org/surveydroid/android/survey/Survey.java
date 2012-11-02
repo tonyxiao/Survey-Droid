@@ -114,24 +114,6 @@ public class Survey
 		
 		this.id = id;
 
-		//open up a database helper
-		this.ctxt = ctxt;
-		db = new SurveyDBHandler(ctxt);
-		db.open();
-
-		//start out by getting the survey level stuff done
-		Cursor s = db.getSurvey(id);
-		if (!s.moveToFirst())
-		{
-			db.close();
-			throw new IllegalArgumentException("no such survey: " + id);
-		}
-		name = processText(s.getString(
-				s.getColumnIndexOrThrow(SurveyDroidDB.SurveyTable.NAME)));
-		int firstQID = s.getInt(
-				s.getColumnIndexOrThrow(SurveyDroidDB.SurveyTable.QUESTION_ID));
-		s.close();
-
 		//set up a bunch of data structures to help out
 		Map<Integer, Question> qMap = new HashMap<Integer, Question>();
 		Map<Integer, Choice> cMap = new HashMap<Integer, Choice>();
@@ -139,36 +121,63 @@ public class Survey
 		Queue<Integer> toDo = new LinkedList<Integer>();
 		Collection<Branch> bList = new LinkedList<Branch>();
 		Collection<Condition> cList = new LinkedList<Condition>();
-
-		//set up the first question, then iterate until done
-		Util.d(null, TAG, "First question Setup");
+		
+		//open up a database helper
+		this.ctxt = ctxt;
+		db = new SurveyDBHandler(ctxt);
+		db.open();
 		try
 		{
-			firstQ = setUpQuestion(firstQID, qMap, cMap, seen, bList, cList, toDo);
-		}
-		catch (SurveyConstructionException e)
-		{
-			e.setBuildQustion(firstQID);
-			db.close();
-			throw e;
-		}
-		currentQ = firstQ;
-		while (!toDo.isEmpty())
-		{
-			Util.v(null, TAG, "next question");
-			int qid = toDo.remove();
+			//start out by getting the survey level stuff done
+			int firstQID;
+			Cursor s = db.getSurvey(id);
 			try
 			{
-				setUpQuestion(qid, qMap, cMap, seen, bList, cList, toDo);
+				if (!s.moveToFirst())
+				{
+					throw new IllegalArgumentException("no such survey: " + id);
+				}
+				name = processText(s.getString(
+						s.getColumnIndexOrThrow(SurveyDroidDB.SurveyTable.NAME)));
+				firstQID = s.getInt(
+						s.getColumnIndexOrThrow(SurveyDroidDB.SurveyTable.QUESTION_ID));
+			}
+			finally
+			{
+				s.close();
+			}
+	
+			//set up the first question, then iterate until done
+			Util.d(null, TAG, "First question Setup");
+			try
+			{
+				firstQ = setUpQuestion(firstQID, qMap, cMap, seen, bList, cList, toDo);
 			}
 			catch (SurveyConstructionException e)
 			{
-				e.setBuildQustion(qid);
-				db.close();
+				e.setBuildQustion(firstQID);
 				throw e;
 			}
+			currentQ = firstQ;
+			while (!toDo.isEmpty())
+			{
+				Util.v(null, TAG, "next question");
+				int qid = toDo.remove();
+				try
+				{
+					setUpQuestion(qid, qMap, cMap, seen, bList, cList, toDo);
+				}
+				catch (SurveyConstructionException e)
+				{
+					e.setBuildQustion(qid);
+					throw e;
+				}
+			}
 		}
-		db.close();
+		finally
+		{
+			db.close();
+		}
 
 		//now that we have a complete Question mapping, go back and set
 		//all the Branches and Conditions
@@ -847,16 +856,21 @@ public class Survey
 		boolean worked = true;
 		SurveyDBHandler db = new SurveyDBHandler(ctxt);
 		db.open();
-
-		//save all the live Answers
-		while (!registry.empty())
+		try
 		{
-			if (registry.pop().write(db) == false)
+			//save all the live Answers
+			while (!registry.empty())
 			{
-				worked = false;
+				if (registry.pop().write(db) == false)
+				{
+					worked = false;
+				}
 			}
 		}
-		db.close();
+		finally
+		{
+			db.close();
+		}
 
 		//wipe the Question history
 		while (!history.empty())

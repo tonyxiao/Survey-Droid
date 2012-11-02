@@ -256,7 +256,10 @@ public class MainActivity extends Activity
         		Toast.LENGTH_SHORT).show();
     }
 
-    //for taking photos
+    /**
+     * For taking photos
+     * @deprecated
+     */
     @Override
     public void onActivityResult(int requestCode,
     		int resultCode, Intent intent)

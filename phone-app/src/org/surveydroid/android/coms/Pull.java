@@ -133,15 +133,21 @@ public class Pull
 	    		{
 		            SurveyDroidDB pdb = new SurveyDroidDB(ctxt);
 		            SQLiteDatabase sdb = pdb.getWritableDatabase();
-		            //it's important that config be the first thing
-		            syncConfig(sdb, json.getJSONObject("config"), ctxt);
-		            syncSurveys(sdb, json.getJSONArray("surveys"));
-		            syncQuestions(sdb, json.getJSONArray("questions"));
-		            syncChocies(sdb, json.getJSONArray("choices"));
-		            syncBranches(sdb, json.getJSONArray("branches"));
-		            syncConditions(sdb, json.getJSONArray("conditions"));
-		            sdb.close();
-		            pdb.close();
+		            try
+		            {
+			            //it's important that config be the first thing
+			            syncConfig(sdb, json.getJSONObject("config"), ctxt);
+			            syncSurveys(sdb, json.getJSONArray("surveys"));
+			            syncQuestions(sdb, json.getJSONArray("questions"));
+			            syncChocies(sdb, json.getJSONArray("choices"));
+			            syncBranches(sdb, json.getJSONArray("branches"));
+			            syncConditions(sdb, json.getJSONArray("conditions"));
+		            }
+		            finally
+		            {
+			            sdb.close();
+			            pdb.close();
+		            }
 	    		}
 	    		catch (Exception e)
 	    		{

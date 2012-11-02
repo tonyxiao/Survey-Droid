@@ -104,128 +104,146 @@ public class CallTracker extends WakefulIntentService
 		Cursor newCalls = getContentResolver().query(
 				CallLog.Calls.CONTENT_URI,
 				cols, where, whereArgs, order);
-		
-		Util.d(null, TAG, newCalls.getCount()
-				+ " new call(s) found");
-		if (newCalls.getCount() != 0)
+		try
 		{
-			//FIXME in the event that multiple calls are detected,
-			//this code should only log calls other than the last
-			//one if they are from old numbers
-			TrackingDBHandler tdbh = new TrackingDBHandler(this);
-			tdbh.open();
-			newCalls.moveToFirst();
-			while (!newCalls.isAfterLast())
+			Util.d(null, TAG, newCalls.getCount()
+					+ " new call(s) found");
+			if (newCalls.getCount() != 0)
 			{
-				String number = Util.cleanPhoneNumber(newCalls.getString(
-						newCalls.getColumnIndexOrThrow(
-								CallLog.Calls.NUMBER)));
-				int type = newCalls.getInt(
-						newCalls.getColumnIndexOrThrow(
-								CallLog.Calls.TYPE));
-				boolean server = Config.getSetting(this,
-						Config.CALL_LOG_SERVER,
-						Config.CALL_LOG_SERVER_DEFAULT);
-		    	boolean local = Config.getSetting(this,
-		    			Config.CALL_LOG_LOCAL, true);
-		    	if (local && server)
-		    	{
-		    		long time = newCalls.getLong(
-									newCalls.getColumnIndexOrThrow(
-									CallLog.Calls.DATE));
-		    		TimeZone tz = TimeZone.getDefault();
-		    		time += tz.getOffset(time);
-					tdbh.writeCall(number,type,
-						(int) newCalls.getLong(
-								newCalls.getColumnIndexOrThrow(
-								CallLog.Calls.DURATION)),
-						  time / 1000);
-		    	}
-				/*
-				 * In the rare case that multiple calls are found
-				 * here, we don't want to confuse people by
-				 * starting multiple surveys at once.  Therefore,
-				 * only start a survey for the most recent call.
-				 */
-				if (!newCalls.isLast())
+				//FIXME in the event that multiple calls are detected,
+				//this code should only log calls other than the last
+				//one if they are from old numbers
+				TrackingDBHandler tdbh = new TrackingDBHandler(this);
+				tdbh.open();
+				try
 				{
-					newCalls.moveToNext();
-					continue;
-				}
-				
-				//make sure the number is not null (for some reason...)
-				if (number == null)
-				{
-					Util.e(null, TAG, "Got a null phone number!?!?");
-					break;
-				}
-				
-				//make sure the number is not study admin's number
-				if (Util.cleanPhoneNumber(Config.getSetting(this,
-						Config.ADMIN_PHONE_NUMBER,
-						Config.ADMIN_PHONE_NUMBER_DEFAULT)).equals(number))
-				{
-					newCalls.moveToNext();
-					continue;
-				}
-				
-				if (type != SurveyDroidDB.CallLogTable.CallType.INCOMING)
-				{
-					newCalls.moveToNext();
-					continue;
-				}
-				
-				Cursor surveys;
-				if (tdbh.isNewNumber(number))
-				{
-					Util.d(null, TAG, "New number!");
-					surveys = tdbh.getNewCallSurveys();
-				}
-				else
-				{
-					Util.d(null, TAG, "Old number");
-					surveys = tdbh.getOldCallSurveys();
-				}
-				int count = surveys.getCount();
-				if (count != 0)
-				{
-					surveys.moveToFirst();
-					int id_i = surveys.getColumnIndexOrThrow(
-							SurveyDroidDB.SurveyTable._ID);
-					for (int i = 0; i < count; i++)
+					newCalls.moveToFirst();
+					while (!newCalls.isAfterLast())
 					{
-						Intent surveyIntent = new Intent(this,
-							SurveyService.class);
-						surveyIntent.setAction(
-							SurveyService.ACTION_SURVEY_READY);
-						surveyIntent.putExtra(
-							SurveyService.EXTRA_SURVEY_ID,
-							surveys.getInt(id_i));
-						surveyIntent.putExtra(
-							SurveyService.EXTRA_SURVEY_TYPE,
-							SurveyService.SURVEY_TYPE_CALL_INIT);
-						Uri uri = Uri.parse("call tracker survey");
-						Dispatcher.dispatch(this, surveyIntent,
-							0, Dispatcher.TYPE_WAKEFUL_MANUAL, uri);
+						String number = Util.cleanPhoneNumber(newCalls.getString(
+								newCalls.getColumnIndexOrThrow(
+										CallLog.Calls.NUMBER)));
+						int type = newCalls.getInt(
+								newCalls.getColumnIndexOrThrow(
+										CallLog.Calls.TYPE));
+						boolean server = Config.getSetting(this,
+								Config.CALL_LOG_SERVER,
+								Config.CALL_LOG_SERVER_DEFAULT);
+				    	boolean local = Config.getSetting(this,
+				    			Config.CALL_LOG_LOCAL, true);
+				    	if (local && server)
+				    	{
+				    		long time = newCalls.getLong(
+											newCalls.getColumnIndexOrThrow(
+											CallLog.Calls.DATE));
+				    		TimeZone tz = TimeZone.getDefault();
+				    		time += tz.getOffset(time);
+							tdbh.writeCall(number,type,
+								(int) newCalls.getLong(
+										newCalls.getColumnIndexOrThrow(
+										CallLog.Calls.DURATION)),
+								  time / 1000);
+				    	}
+						/*
+						 * In the rare case that multiple calls are found
+						 * here, we don't want to confuse people by
+						 * starting multiple surveys at once.  Therefore,
+						 * only start a survey for the most recent call.
+						 */
+						if (!newCalls.isLast())
+						{
+							newCalls.moveToNext();
+							continue;
+						}
+						
+						//make sure the number is not null (for some reason...)
+						if (number == null)
+						{
+							Util.e(null, TAG, "Got a null phone number!?!?");
+							break;
+						}
+						
+						//make sure the number is not study admin's number
+						if (Util.cleanPhoneNumber(Config.getSetting(this,
+								Config.ADMIN_PHONE_NUMBER,
+								Config.ADMIN_PHONE_NUMBER_DEFAULT)).equals(number))
+						{
+							newCalls.moveToNext();
+							continue;
+						}
+						
+						if (type != SurveyDroidDB.CallLogTable.CallType.INCOMING)
+						{
+							newCalls.moveToNext();
+							continue;
+						}
+						
+						Cursor surveys;
+						if (tdbh.isNewNumber(number))
+						{
+							Util.d(null, TAG, "New number!");
+							surveys = tdbh.getNewCallSurveys();
+						}
+						else
+						{
+							Util.d(null, TAG, "Old number");
+							surveys = tdbh.getOldCallSurveys();
+						}
+						try
+						{
+							int count = surveys.getCount();
+							if (count != 0)
+							{
+								surveys.moveToFirst();
+								int id_i = surveys.getColumnIndexOrThrow(
+										SurveyDroidDB.SurveyTable._ID);
+								for (int i = 0; i < count; i++)
+								{
+									Intent surveyIntent = new Intent(this,
+										SurveyService.class);
+									surveyIntent.setAction(
+										SurveyService.ACTION_SURVEY_READY);
+									surveyIntent.putExtra(
+										SurveyService.EXTRA_SURVEY_ID,
+										surveys.getInt(id_i));
+									surveyIntent.putExtra(
+										SurveyService.EXTRA_SURVEY_TYPE,
+										SurveyService.SURVEY_TYPE_CALL_INIT);
+									Uri uri = Uri.parse("call tracker survey");
+									Dispatcher.dispatch(this, surveyIntent,
+										0, Dispatcher.TYPE_WAKEFUL_MANUAL, uri);
+								}
+							}
+						}
+						finally
+						{
+							surveys.close();
+						}
+						//this avoids a potential race condition
+						long last = newCalls.getLong(
+								newCalls.getColumnIndexOrThrow(
+								CallLog.Calls.DATE));
+						Config.putSetting(this, LAST_LOOKUP, Long.toString(last));
+						newCalls.moveToNext();
 					}
 				}
-				//this avoids a potential race condition
-				long last = newCalls.getLong(
-						newCalls.getColumnIndexOrThrow(
-						CallLog.Calls.DATE));
-				Config.putSetting(this, LAST_LOOKUP, Long.toString(last));
-				newCalls.moveToNext();
+				finally
+				{
+					tdbh.close();
+				}
+				
+				//tell the coms service to upload the call information
+				Intent uploadIntent = new Intent(this,
+						ComsService.class);
+				uploadIntent.setAction(ComsService.ACTION_UPLOAD_DATA);
+				uploadIntent.putExtra(ComsService.EXTRA_DATA_TYPE,
+						ComsService.CALL_DATA);
+				WakefulIntentService.sendWakefulWork(this, uploadIntent);
 			}
-			tdbh.close();
-			
-			//tell the coms service to upload the call information
-			Intent uploadIntent = new Intent(this,
-					ComsService.class);
-			uploadIntent.setAction(ComsService.ACTION_UPLOAD_DATA);
-			uploadIntent.putExtra(ComsService.EXTRA_DATA_TYPE,
-					ComsService.CALL_DATA);
-			WakefulIntentService.sendWakefulWork(this, uploadIntent);
 		}
-		newCalls.close();
+		finally
+		{
+			newCalls.close();
+		}
 	}
 }

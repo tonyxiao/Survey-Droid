@@ -236,107 +236,119 @@ public class SurveyScheduler extends WakefulIntentService
 	{
 		Util.i(null, TAG, "Scheduling surveys");
 		
+		long nextRun;
 		SurveyDBHandler sdbh = new SurveyDBHandler(this);
 		sdbh.open();
-		Cursor surveys = sdbh.getSurveys();
-		
-		surveys.moveToFirst();
-		String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-		long nextRun = System.currentTimeMillis() + (Config.getSetting(this,
-				Config.SCHEDULER_INTERVAL, Config.SCHEDULER_INTERVAL_DEFAULT)
-				* 60 * 1000);
-		Util.d(null, TAG, "Number of surveys found: " + surveys.getCount());
-		while (!surveys.isAfterLast())
+		try
 		{
-			int id = surveys.getInt(surveys.getColumnIndexOrThrow(
-					SurveyDroidDB.SurveyTable._ID));
-			Util.d(null, TAG, "Doing survey " + id);
-			for (int i = 0; i < days.length; i++)
+			Cursor surveys = sdbh.getSurveys();
+			try
 			{
-				Util.v(null, TAG, "Doing " + days[i]);
-				String timeString = surveys.getString(
-						surveys.getColumnIndexOrThrow(
-								SurveyDroidDB.SurveyTable.DAYS[i]));
-				Util.v(null, TAG, "Time string: " + timeString);
-				String[] times = timeString.split(",");
-				for (String time : times)
+				surveys.moveToFirst();
+				String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+				nextRun = System.currentTimeMillis() + (Config.getSetting(this,
+						Config.SCHEDULER_INTERVAL, Config.SCHEDULER_INTERVAL_DEFAULT)
+						* 60 * 1000);
+				Util.d(null, TAG, "Number of surveys found: " + surveys.getCount());
+				while (!surveys.isAfterLast())
 				{
-					if (time == "") continue;  //"".split(",") returns { "" }
-					long scheduledTime;
-					boolean random = false;
-					try
+					int id = surveys.getInt(surveys.getColumnIndexOrThrow(
+							SurveyDroidDB.SurveyTable._ID));
+					Util.d(null, TAG, "Doing survey " + id);
+					for (int i = 0; i < days.length; i++)
 					{
-						scheduledTime = Util.getUnixTime(days[i], time);
+						Util.v(null, TAG, "Doing " + days[i]);
+						String timeString = surveys.getString(
+								surveys.getColumnIndexOrThrow(
+										SurveyDroidDB.SurveyTable.DAYS[i]));
+						Util.v(null, TAG, "Time string: " + timeString);
+						String[] times = timeString.split(",");
+						for (String time : times)
+						{
+							if (time == "") continue;  //"".split(",") returns { "" }
+							long scheduledTime;
+							boolean random = false;
+							try
+							{
+								scheduledTime = Util.getUnixTime(days[i], time);
+							}
+							catch (IllegalArgumentException e1)
+							{
+								//could be a random survey, so check that
+								String first;
+								String second;
+								try
+								{
+									
+									String[] both = time.split("-");
+									first = both[0];
+									second = both[1];
+		
+								}
+								catch (Exception e2)
+								{
+									Util.e(null, TAG, "Invalid survey time: \""
+											+ time + "\"; skipping");
+									continue;
+								}
+								long start = Util.getUnixTime(days[i], first);
+								long end = Util.getUnixTime(days[i],
+									second, start);
+								long diff = end - start;
+								
+								//don't miss surveys if the scheduler runs inside the
+								//survey window
+								end = Util.getUnixTime(days[i], second);
+								//an (over) estimate of the maximum amount of "leap"
+								//time that can occur in a single week
+								long maxTimeDiff = 2 * 60 * 60 * 1000; //2 hours
+								start = Util.getUnixTime(days[i], first,
+									end - diff - maxTimeDiff);
+								
+								scheduledTime = getRandomSurveyTime(id, start, end);
+								if (scheduledTime < System.currentTimeMillis())
+								{
+									start = Util.getUnixTime(days[i], first);
+									end = Util.getUnixTime(days[i], second, start);
+									scheduledTime = getRandomSurveyTime(id, start, end);
+								}
+								
+								random = true;
+							}
+		
+							if (Config.D)
+							{
+								Date d = new Date(scheduledTime);
+								Util.v(null, TAG, "Survey would be scheduled for "
+										+ d.toGMTString());
+								if (!random)
+								{
+									Util.v(null, TAG, "should be scheduled for "
+											+ days[i] + " at " + time);
+								}
+								else
+								{
+									Util.v(null, TAG, "should be scheduled for "
+											+ days[i] + " between "
+											+ time.split("-")[0] + " and "
+											+ time.split("-")[1]);
+								}
+							}
+							addSurvey(id, scheduledTime, random);
+						}
 					}
-					catch (IllegalArgumentException e1)
-					{
-						//could be a random survey, so check that
-						String first;
-						String second;
-						try
-						{
-							
-							String[] both = time.split("-");
-							first = both[0];
-							second = both[1];
-
-						}
-						catch (Exception e2)
-						{
-							Util.e(null, TAG, "Invalid survey time: \""
-									+ time + "\"; skipping");
-							continue;
-						}
-						long start = Util.getUnixTime(days[i], first);
-						long end = Util.getUnixTime(days[i],
-							second, start);
-						long diff = end - start;
-						
-						//don't miss surveys if the scheduler runs inside the
-						//survey window
-						end = Util.getUnixTime(days[i], second);
-						//an (over) estimate of the maximum amount of "leap"
-						//time that can occur in a single week
-						long maxTimeDiff = 2 * 60 * 60 * 1000; //2 hours
-						start = Util.getUnixTime(days[i], first,
-							end - diff - maxTimeDiff);
-						
-						scheduledTime = getRandomSurveyTime(id, start, end);
-						if (scheduledTime < System.currentTimeMillis())
-						{
-							start = Util.getUnixTime(days[i], first);
-							end = Util.getUnixTime(days[i], second, start);
-							scheduledTime = getRandomSurveyTime(id, start, end);
-						}
-						
-						random = true;
-					}
-
-					if (Config.D)
-					{
-						Date d = new Date(scheduledTime);
-						Util.v(null, TAG, "Survey would be scheduled for "
-								+ d.toGMTString());
-						if (!random)
-						{
-							Util.v(null, TAG, "should be scheduled for "
-									+ days[i] + " at " + time);
-						}
-						else
-						{
-							Util.v(null, TAG, "should be scheduled for "
-									+ days[i] + " between "
-									+ time.split("-")[0] + " and "
-									+ time.split("-")[1]);
-						}
-					}
-					addSurvey(id, scheduledTime, random);
+					surveys.moveToNext();
 				}
 			}
-			surveys.moveToNext();
+			finally
+			{
+				surveys.close();
+			}
 		}
-		surveys.close();
-		sdbh.close();
+		finally
+		{
+			sdbh.close();
+		}
 		
 		//make sure to run this again later
 		if (!reschedule) return;

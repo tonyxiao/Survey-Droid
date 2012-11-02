@@ -140,7 +140,8 @@ public class ComsService extends WakefulIntentService
 				Push.pushStatusData(this);
 				break;
 			case EXTRAS_DATA:
-				Push.pushExtrasData(this);
+				Util.w(null, TAG, "Call to deprecated \"pushExtras\"");
+				//Push.pushExtrasData(this);
 				break;
 			default:
 				Push.pushAnswers(this);
@@ -148,7 +149,7 @@ public class ComsService extends WakefulIntentService
 				Push.pushLocations(this);
 				Push.pushCallLog(this);
 				Push.pushStatusData(this);
-				Push.pushExtrasData(this);
+				//Push.pushExtrasData(this);
 			}
 			
 			reschedule(intent);

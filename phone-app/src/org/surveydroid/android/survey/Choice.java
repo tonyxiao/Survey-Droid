@@ -169,24 +169,34 @@ public class Choice
 	{
 		SurveyDBHandler db = new SurveyDBHandler(ctxt);
 		db.open();
-		Cursor c = db.getQuestionHistory(id);;
-		c.moveToFirst();
-		while (!c.isAfterLast())
+		try
 		{
-			String[] ids = c.getString(c.getColumnIndexOrThrow(
-					SurveyDroidDB.AnswerTable.CHOICE_IDS)).split(",");
-			for (String thisID : ids)
+			Cursor c = db.getQuestionHistory(id);;
+			try
 			{
-				if (Integer.parseInt(thisID) == this.id)
+				c.moveToFirst();
+				while (!c.isAfterLast())
 				{
-					c.close();
-					db.close();
-					return true;
+					String[] ids = c.getString(c.getColumnIndexOrThrow(
+							SurveyDroidDB.AnswerTable.CHOICE_IDS)).split(",");
+					for (String thisID : ids)
+					{
+						if (Integer.parseInt(thisID) == this.id)
+						{
+							return true;
+						}
+					}
 				}
 			}
+			finally
+			{
+				c.close();
+			}
 		}
-		c.close();
-		db.close();
+		finally
+		{
+			db.close();
+		}
 		return false;
 	}
 	

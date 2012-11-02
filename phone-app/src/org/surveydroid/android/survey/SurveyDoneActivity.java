@@ -57,7 +57,6 @@ public class SurveyDoneActivity extends Activity
 			(Button) findViewById(R.id.survey_done_exitButton);
 		back.setOnClickListener(new View.OnClickListener()
 		{
-			@Override
 			public void onClick(View view)
 			{
 				finish();

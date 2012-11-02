@@ -60,14 +60,12 @@ public class ConfirmSubmitActivity extends Activity
 	//connection to the SurveyService
 	private ServiceConnection connection = new ServiceConnection()
 	{
-		@Override
 		public void onServiceConnected(ComponentName name, IBinder binder)
 		{
 			SurveyBinder sBinder = (SurveyBinder) binder;
 			survey = sBinder.getSurvey();
 		}
 		
-		@Override
 		public void onServiceDisconnected(ComponentName name) {}
 	};
 	
@@ -100,7 +98,6 @@ public class ConfirmSubmitActivity extends Activity
 			(Button) findViewById(R.id.survey_confirmation_backButton);
 		back.setOnClickListener(new View.OnClickListener()
 		{
-			@Override
 			public void onClick(View view)
 			{
 				onBackPressed();
@@ -111,7 +108,6 @@ public class ConfirmSubmitActivity extends Activity
 			(Button) findViewById(R.id.survey_confirmation_confirmButton);
 		finish.setOnClickListener(new View.OnClickListener()
 		{
-			@Override
 			public void onClick(View v)
 			{
 				//finish up the backend stuff

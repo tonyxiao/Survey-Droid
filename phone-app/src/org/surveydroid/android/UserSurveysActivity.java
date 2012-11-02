@@ -75,29 +75,44 @@ public class UserSurveysActivity extends ListActivity
         }
         
         //set the list data
+        boolean sampleTaken;
+        final int[] ids;
+        String[] names;
         SurveyDBHandler sdbh = new SurveyDBHandler(this);
         sdbh.open();
-        Cursor surveys = sdbh.getSubjectInitSurveys();
-        //remember to add one so we can insert the sample survey
-        int count = surveys.getCount();
-        boolean sampleTaken =
-        	Config.getSetting(this, Config.SAMPLE_SURVEY_TAKEN, false);
-        if (!sampleTaken) count++;
-        final int[] ids = new int[count];
-        String[] names = new String[count];
-        surveys.moveToFirst();
-        int i = 0;
-        if (!sampleTaken) i++;
-        for (; !surveys.isAfterLast(); i++)
+        try
         {
-        	ids[i] = surveys.getInt(surveys.getColumnIndexOrThrow(
-        			SurveyDroidDB.SurveyTable._ID));
-        	names[i] = surveys.getString(surveys.getColumnIndexOrThrow(
-        			SurveyDroidDB.SurveyTable.NAME));
-        	surveys.moveToNext();
+	        Cursor surveys = sdbh.getSubjectInitSurveys();
+	        try
+	        {
+		        //remember to add one so we can insert the sample survey
+		        int count = surveys.getCount();
+		       sampleTaken =
+		        	Config.getSetting(this, Config.SAMPLE_SURVEY_TAKEN, false);
+		        if (!sampleTaken) count++;
+		        ids = new int[count];
+		        names = new String[count];
+		        surveys.moveToFirst();
+		        int i = 0;
+		        if (!sampleTaken) i++;
+		        for (; !surveys.isAfterLast(); i++)
+		        {
+		        	ids[i] = surveys.getInt(surveys.getColumnIndexOrThrow(
+		        			SurveyDroidDB.SurveyTable._ID));
+		        	names[i] = surveys.getString(surveys.getColumnIndexOrThrow(
+		        			SurveyDroidDB.SurveyTable.NAME));
+		        	surveys.moveToNext();
+		        }
+	        }
+	        finally
+	        {
+	        	surveys.close();
+	        }
         }
-        surveys.close();
-        sdbh.close();
+        finally
+        {
+        	sdbh.close();
+        }
         if (!sampleTaken)
         {
 	        ids[0] = 0;
@@ -110,7 +125,6 @@ public class UserSurveysActivity extends ListActivity
         lv.setAdapter(adapter);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
-			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int pos,
 					long id)
 			{
@@ -135,8 +149,7 @@ public class UserSurveysActivity extends ListActivity
         Button back = (Button) findViewById(R.id.user_surveys_backButton);
         back.setOnClickListener(new View.OnClickListener()
         {
-        	@Override
-            public void onClick(View view)
+        	public void onClick(View view)
             {
             	finish();
             }

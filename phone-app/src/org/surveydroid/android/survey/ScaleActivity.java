@@ -153,16 +153,13 @@ public abstract class ScaleActivity extends QuestionActivity
 			sliderHoriz.setOnSeekBarChangeListener(
 					new SeekBar.OnSeekBarChangeListener()
 			{
-				@Override
 				public void onStopTrackingTouch(SeekBar seekBar) {}
 				
-				@Override
 				public void onStartTrackingTouch(SeekBar seekBar)
 				{
 					sliderMoved = true;
 				}
 				
-				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress,
 						boolean fromUser)
 				{
@@ -183,16 +180,13 @@ public abstract class ScaleActivity extends QuestionActivity
 			sliderVert.setOnSeekBarChangeListener(
 					new VerticalSeekBar.OnSeekBarChangeListener()
 			{
-				@Override
 				public void onStopTrackingTouch(VerticalSeekBar seekBar) {}
 				
-				@Override
 				public void onStartTrackingTouch(VerticalSeekBar seekBar)
 				{
 					sliderMoved = true;
 				}
 				
-				@Override
 				public void onProgressChanged(VerticalSeekBar seekBar, int progress,
 						boolean fromUser)
 				{

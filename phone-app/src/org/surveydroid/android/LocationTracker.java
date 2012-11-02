@@ -130,7 +130,6 @@ public class LocationTracker extends BroadcastReceiver
 			return false;
 		}
 
-		@Override
 		public int compareTo(TimePeriod that)
 		{
 			//rationale for this being ok:
@@ -172,8 +171,14 @@ public class LocationTracker extends BroadcastReceiver
 			Util.d(null, TAG, "Tracking is disabled; sending null location");
 			TrackingDBHandler tdbh = new TrackingDBHandler(c);
 			tdbh.open();
-			tdbh.writeLocation(0, 0, TRACKING_OFF, Util.currentTimeAdjusted() / 1000);
-			tdbh.close();
+			try
+			{
+				tdbh.writeLocation(0, 0, TRACKING_OFF, Util.currentTimeAdjusted() / 1000);
+			}
+			finally
+			{
+				tdbh.close();
+			}
 			uploadNow(c);
 			return;
 		}
@@ -234,8 +239,14 @@ public class LocationTracker extends BroadcastReceiver
 			Util.d(null, TAG, "Not in valid time; sending null location");
 			TrackingDBHandler tdbh = new TrackingDBHandler(c);
 			tdbh.open();
-			tdbh.writeLocation(0, 0, BAD_TIME, Util.currentTimeAdjusted() / 1000);
-			tdbh.close();
+			try
+			{
+				tdbh.writeLocation(0, 0, BAD_TIME, Util.currentTimeAdjusted() / 1000);
+			}
+			finally
+			{
+				tdbh.close();
+			}
 			uploadNow(c);
 			return;
 		}
@@ -249,8 +260,14 @@ public class LocationTracker extends BroadcastReceiver
 			Util.d(null, TAG, "No valid location to send; sending null location");
 			TrackingDBHandler tdbh = new TrackingDBHandler(c);
 			tdbh.open();
-			tdbh.writeLocation(0, 0, NO_LOCATION, Util.currentTimeAdjusted() / 1000);
-			tdbh.close();
+			try
+			{
+				tdbh.writeLocation(0, 0, NO_LOCATION, Util.currentTimeAdjusted() / 1000);
+			}
+			finally
+			{
+				tdbh.close();
+			}
 			uploadNow(c);
 			return;
 		}
@@ -299,8 +316,14 @@ public class LocationTracker extends BroadcastReceiver
 				Util.d(null, TAG, "Location is out of range");
 				TrackingDBHandler tdbh = new TrackingDBHandler(c);
 				tdbh.open();
-				tdbh.writeLocation(0, 0, OUT_OF_RANGE, Util.currentTimeAdjusted() / 1000);
-				tdbh.close();
+				try
+				{
+					tdbh.writeLocation(0, 0, OUT_OF_RANGE, Util.currentTimeAdjusted() / 1000);
+				}
+				finally
+				{
+					tdbh.close();
+				}
 				uploadNow(c);
 				return;
 			}
@@ -310,8 +333,14 @@ public class LocationTracker extends BroadcastReceiver
 		Util.v(null, TAG, "Lat: " + latestLat + ", long: " + latestLong);
 		TrackingDBHandler tdbh = new TrackingDBHandler(c);
 		tdbh.open();
-		tdbh.writeLocation(latestLat, latestLong, latestAcc, Util.currentTimeAdjusted() / 1000);
-		tdbh.close();
+		try
+		{
+			tdbh.writeLocation(latestLat, latestLong, latestAcc, Util.currentTimeAdjusted() / 1000);
+		}
+		finally
+		{
+			tdbh.close();
+		}
 		uploadNow(c);
 		timesSent++;
 	}

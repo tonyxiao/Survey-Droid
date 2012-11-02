@@ -90,51 +90,64 @@ public class IncomingSMSTracker extends BroadcastReceiver
 		// write the message record to database
 		TrackingDBHandler tdbh = new TrackingDBHandler(ctxt);
 		tdbh.open();
-		for (int i = 0; i < messages.length; i++)
+		try
 		{
-			String number = Util.cleanPhoneNumber(
-				smsMessage[i].getOriginatingAddress());
-			tdbh.writeCall(number,
-					SurveyDroidDB.CallLogTable.CallType.INCOMING_TEXT,
-					-1, //doesn't matter; ignored for this type
-					smsMessage[i].getTimestampMillis() / 1000);
-			if (i == messages.length - 1)
+			for (int i = 0; i < messages.length; i++)
 			{
-				Cursor surveys;
-				if (tdbh.isNewNumber(number))
+				String number = Util.cleanPhoneNumber(
+					smsMessage[i].getOriginatingAddress());
+				tdbh.writeCall(number,
+						SurveyDroidDB.CallLogTable.CallType.INCOMING_TEXT,
+						-1, //doesn't matter; ignored for this type
+						smsMessage[i].getTimestampMillis() / 1000);
+				if (i == messages.length - 1)
 				{
-					surveys = tdbh.getNewTextSurveys();
-				}
-				else
-				{
-					surveys = tdbh.getOldTextSurveys();
-				}
-				int count = surveys.getCount();
-				if (count != 0)
-				{
-					surveys.moveToFirst();
-					int id_i = surveys.getColumnIndexOrThrow(
-							SurveyDroidDB.SurveyTable._ID);
-					for (int j = 0; j < count; j++)
+					Cursor surveys;
+					if (tdbh.isNewNumber(number))
 					{
-						Intent surveyIntent = new Intent(ctxt,
-							SurveyService.class);
-						surveyIntent.setAction(
-							SurveyService.ACTION_SURVEY_READY);
-						surveyIntent.putExtra(
-							SurveyService.EXTRA_SURVEY_ID,
-							surveys.getInt(id_i));
-						surveyIntent.putExtra(
-							SurveyService.EXTRA_SURVEY_TYPE,
-							SurveyService.SURVEY_TYPE_CALL_INIT);
-						Uri uri = Uri.parse("sms tracker survey");
-						Dispatcher.dispatch(ctxt, surveyIntent,
-							0, Dispatcher.TYPE_WAKEFUL_MANUAL, uri);
+						surveys = tdbh.getNewTextSurveys();
+					}
+					else
+					{
+						surveys = tdbh.getOldTextSurveys();
+					}
+					try
+					{
+						int count = surveys.getCount();
+						if (count != 0)
+						{
+							surveys.moveToFirst();
+							int id_i = surveys.getColumnIndexOrThrow(
+									SurveyDroidDB.SurveyTable._ID);
+							for (int j = 0; j < count; j++)
+							{
+								Intent surveyIntent = new Intent(ctxt,
+									SurveyService.class);
+								surveyIntent.setAction(
+									SurveyService.ACTION_SURVEY_READY);
+								surveyIntent.putExtra(
+									SurveyService.EXTRA_SURVEY_ID,
+									surveys.getInt(id_i));
+								surveyIntent.putExtra(
+									SurveyService.EXTRA_SURVEY_TYPE,
+									SurveyService.SURVEY_TYPE_CALL_INIT);
+								Uri uri = Uri.parse("sms tracker survey");
+								Dispatcher.dispatch(ctxt, surveyIntent,
+									0, Dispatcher.TYPE_WAKEFUL_MANUAL, uri);
+							}
+						}
+					}
+					finally
+					{
+						surveys.close();
 					}
 				}
 			}
 		}
-		tdbh.close();
+		finally
+		{
+			tdbh.close();
+		}
 		
 		//tell the coms service to upload the call information
 		Intent uploadIntent = new Intent(ctxt,

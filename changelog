@@ -1,5 +1,9 @@
 Survey Droid Changelog
 ----------------------
+Version 1.1.4:
+	-Technical:
+		-Improved the use of try-finally blocks to enforce database and cursor closing.
+
 Version 1.1.3:
 	-Updated locpoll library to fix a Wakelock bug.
 	-Technical:

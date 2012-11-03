@@ -46,6 +46,7 @@ import org.surveydroid.android.LocationTracker;
 import org.surveydroid.android.Util;
 import org.surveydroid.android.coms.WebClient;
 import org.surveydroid.android.coms.WebClient.ApiException;
+import org.surveydroid.android.database.DatabaseConnection;
 import org.surveydroid.android.database.SurveyDroidDB;
 import org.surveydroid.android.survey.SurveyScheduler;
 
@@ -131,22 +132,20 @@ public class Pull
 	    		}
 	    		try
 	    		{
-		            SurveyDroidDB pdb = new SurveyDroidDB(ctxt);
-		            SQLiteDatabase sdb = pdb.getWritableDatabase();
+	    			SQLiteDatabase db = DatabaseConnection.getConnection(ctxt).open();
 		            try
 		            {
 			            //it's important that config be the first thing
-			            syncConfig(sdb, json.getJSONObject("config"), ctxt);
-			            syncSurveys(sdb, json.getJSONArray("surveys"));
-			            syncQuestions(sdb, json.getJSONArray("questions"));
-			            syncChocies(sdb, json.getJSONArray("choices"));
-			            syncBranches(sdb, json.getJSONArray("branches"));
-			            syncConditions(sdb, json.getJSONArray("conditions"));
+			            syncConfig(db, json.getJSONObject("config"), ctxt);
+			            syncSurveys(db, json.getJSONArray("surveys"));
+			            syncQuestions(db, json.getJSONArray("questions"));
+			            syncChocies(db, json.getJSONArray("choices"));
+			            syncBranches(db, json.getJSONArray("branches"));
+			            syncConditions(db, json.getJSONArray("conditions"));
 		            }
 		            finally
 		            {
-			            sdb.close();
-			            pdb.close();
+			            db.close();
 		            }
 	    		}
 	    		catch (Exception e)

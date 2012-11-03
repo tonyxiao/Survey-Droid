@@ -79,7 +79,7 @@ public class DatabaseConnection
 	/**
 	 * Close the database.
 	 * 
-	 * @return true of this actually closes the database
+	 * @return true if this actually closes the database
 	 */
 	public synchronized boolean close()
 	{

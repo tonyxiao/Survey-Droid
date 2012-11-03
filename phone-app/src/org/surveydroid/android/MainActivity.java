@@ -76,7 +76,7 @@ public class MainActivity extends Activity
         if (Config.getSetting(this, BootIntentReceiver.STARTED_KEY, 0) == 0)
         {
         	Util.w(null, TAG, "Background services not started; starting now");
-        	BootIntentReceiver.startup(this);
+        	BootIntentReceiver.startup(this.getApplicationContext());
         }
         
         //setting the layout of the activity

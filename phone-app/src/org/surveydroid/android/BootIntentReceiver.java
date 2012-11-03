@@ -90,7 +90,6 @@ public class BootIntentReceiver extends BroadcastReceiver
      */
     public static synchronized void startup(Context context)
     {
-		
     	if (Config.getSetting(context, STARTED_KEY, 0) != 0)
     	{
     		Util.w(null, TAG, "Already started or starting; aborting");

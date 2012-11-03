@@ -233,9 +233,9 @@ public final class Util
 		{
 			if (c != null) toast(c, tag + " :: " + msg);
 			if (USE_APP_TAG)
-				Log.w(APP_TAG, tag + " :: " + msg);
+				Log.i(APP_TAG, tag + " :: " + msg);
 			else
-				Log.w(tag, msg);
+				Log.i(tag, msg);
 			log(msg);
 		}
 		else
@@ -257,9 +257,9 @@ public final class Util
 		{
 			if (c != null) toast(c, tag + " :: " + msg);
 			if (USE_APP_TAG)
-				Log.w(APP_TAG, tag + " :: " + msg);
+				Log.d(APP_TAG, tag + " :: " + msg);
 			else
-				Log.w(tag, msg);
+				Log.d(tag, msg);
 			log(msg);
 		}
 		else
@@ -281,9 +281,9 @@ public final class Util
 		{
 			if (c != null) toast(c, tag + " :: " + msg);
 			if (USE_APP_TAG)
-				Log.w(APP_TAG, tag + " :: " + msg);
+				Log.v(APP_TAG, tag + " :: " + msg);
 			else
-				Log.w(tag, msg);
+				Log.v(tag, msg);
 			log(msg);
 		}
 		else
